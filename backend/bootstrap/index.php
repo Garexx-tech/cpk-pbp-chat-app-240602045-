@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/loadEnv.php';
 require_once __DIR__ . '/response.php';
 
@@ -14,7 +18,7 @@ if (is_file($envPath)) {
 
 spl_autoload_register(static function (string $class): void {
     $prefixes = [
-        'Controllers\\' => dirname(__DIR__) . '/controllers/',
+        'Controllers\\' => dirname(__DIR__) . '/Controllers/',
         'Lib\\' => dirname(__DIR__) . '/lib/',
         'Models\\' => dirname(__DIR__) . '/models/',
     ];
@@ -24,7 +28,11 @@ spl_autoload_register(static function (string $class): void {
             continue;
         }
 
-        $file = $directory . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        $relative = str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        $file = $directory . $relative;
+        if (!is_file($file)) {
+            $file = dirname(__DIR__) . '/' . strtolower(rtrim($prefix, '\\')) . '/' . $relative;
+        }
         if (is_file($file)) {
             require $file;
         }

@@ -20,6 +20,16 @@ class Router
         $this->add('POST', $path, $handler);
     }
 
+    public function put(string $path, callable $handler): void
+    {
+        $this->add('PUT', $path, $handler);
+    }
+
+    public function delete(string $path, callable $handler): void
+    {
+        $this->add('DELETE', $path, $handler);
+    }
+
     public function add(string $method, string $path, callable $handler): void
     {
         $path = $this->normalizePath($path);
@@ -46,7 +56,14 @@ class Router
     public function dispatch(string $method, string $uri): void
     {
         $path = parse_url($uri, PHP_URL_PATH);
-        $path = $this->normalizePath(is_string($path) ? $path : '/');
+        $path = is_string($path) ? $path : '/';
+
+        $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
+        if ($scriptDir !== '/' && $scriptDir !== '.' && str_starts_with($path, $scriptDir)) {
+            $path = substr($path, strlen($scriptDir));
+        }
+
+        $path = $this->normalizePath($path);
         $method = strtoupper($method);
         $allowedMethods = [];
 
